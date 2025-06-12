@@ -60,6 +60,7 @@ In the same terminal window (still inside your project folder), run the Python s
 ```
 python app.py
 ```
+Or just run the file however you want
 
 You will see a message indicating that the server is running and listening on [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
