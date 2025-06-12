@@ -9,7 +9,7 @@
 import pandas as pd
 from flask import Flask, jsonify, render_template, send_from_directory
 
-# Initialize the Flask application
+# Initialize the Flask application nice
 # We tell Flask to look for the HTML file in the current directory.
 app = Flask(__name__, template_folder='.')
 
