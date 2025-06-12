@@ -13,6 +13,7 @@
         body { font-family: 'Inter', sans-serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        #confirmation-modal { transition: opacity 0.3s ease; }
     </style>
 </head>
 <body class="h-full text-gray-800">
@@ -24,43 +25,62 @@
                     <h1 class="text-2xl font-bold text-gray-900">Project Dashboard</h1>
                 </div>
                  <!-- Search and Filter Controls -->
-                <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
-                    <div class="flex-grow">
-                        <label for="searchInput" class="sr-only">Search</label>
-                        <input type="text" id="searchInput" placeholder="Search by keyword, title, theme..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                <div class="mt-4 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
+                        <div class="flex-grow">
+                            <label for="searchInput" class="sr-only">Search</label>
+                            <input type="text" id="searchInput" placeholder="Search by keyword, title, theme..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                           <label for="sort-select" class="text-sm font-medium text-gray-700">Sort by:</label>
+                           <select id="sort-select" class="rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                               <option value="id">Default</option>
+                               <option value="title">Title (A-Z)</option>
+                               <option value="supervisor">Supervisor (A-Z)</option>
+                           </select>
+                        </div>
                     </div>
-                    <div class="flex-shrink-0">
-                        <button id="viewToggle" class="w-full px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">
+                     <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-2 sm:space-y-0 flex-wrap">
+                        <button id="viewToggle" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">
                             View Saved (<span id="savedCount">0</span>)
                         </button>
+                        <button id="export-saved-btn" class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75">Export Saved</button>
+                        <button id="clear-saved-btn" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">Clear Saved</button>
+                        <button id="random-project-btn" class="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75">Random Project</button>
                     </div>
                 </div>
                 <!-- Status Text Area -->
-                <div id="status-text-container" class="mt-3 text-sm text-center h-5">
-                    <!-- Status text will be injected here -->
-                </div>
+                <div id="status-text-container" class="mt-3 text-sm text-center h-5"></div>
             </div>
         </header>
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
             <!-- Project List -->
-            <div id="project-list-container" class="w-full md:w-1/3 lg:w-1/4 h-1/2 md:h-full overflow-y-auto bg-white border-r border-gray-200 scrollbar-hide">
-                <div id="project-list" class="divide-y divide-gray-200">
-                    <div class="p-4 text-center text-gray-500">Loading projects...</div>
+            <div id="project-list-container" class="w-full md:w-1/3 lg:w-1/4 flex flex-col h-full bg-white border-r border-gray-200">
+                <div class="flex-grow overflow-y-auto scrollbar-hide">
+                    <div id="project-list" class="divide-y divide-gray-200">
+                        <div class="p-4 text-center text-gray-500">Loading projects...</div>
+                    </div>
+                </div>
+                <div id="recently-viewed-container" class="flex-shrink-0 border-t-2 border-gray-200 p-2 bg-gray-50">
+                    <h3 class="text-sm font-semibold text-gray-600 px-2 mb-2">Recently Viewed</h3>
+                    <div id="recently-viewed-list">
+                        <p class="text-xs text-center text-gray-500 px-2">Projects you view will appear here.</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Project Details -->
-            <div id="project-details-container" class="flex-1 h-1/2 md:h-full overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
+            <div id="project-details-container" class="flex-1 h-full overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
                 <div id="project-details" class="h-full">
-                    <div class="flex items-center justify-center h-full">
+                     <div class="flex items-center justify-center h-full">
                         <div class="text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                             </svg>
                             <h3 class="mt-2 text-sm font-medium text-gray-900">No project selected</h3>
-                            <p class="mt-1 text-sm text-gray-500">Select a project from the list to see its details.</p>
+                            <p class="mt-1 text-sm text-gray-500">Select a project or click 'Random Project' to begin.</p>
                         </div>
                     </div>
                 </div>
@@ -68,17 +88,30 @@
         </main>
     </div>
 
-    <script>
-        /*
-        INSTRUCTIONS FOR PYTHON WEB APP:
-        1. Save this file as "index.html".
-        2. Save the Python code into a file named "app.py".
-        3. Make sure "index.html", "app.py", and "Projects.csv" are all in the SAME directory.
-        4. Install required Python libraries: pip install Flask pandas
-        5. Run the Python server from your terminal: python app.py
-        6. Open your web browser and go to: http://127.0.0.1:5000
-        */
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Clear All Saved Projects?</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500">This action cannot be undone. Are you sure you want to proceed?</p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="confirm-clear-btn" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
+                        Yes, Clear All
+                    </button>
+                    <button id="cancel-clear-btn" class="px-4 py-2 ml-3 bg-gray-200 text-gray-900 text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <script>
         // --- DOM Elements ---
         const projectListEl = document.getElementById('project-list');
         const projectDetailsEl = document.getElementById('project-details');
@@ -86,44 +119,52 @@
         const viewToggleBtn = document.getElementById('viewToggle');
         const savedCountEl = document.getElementById('savedCount');
         const statusTextContainer = document.getElementById('status-text-container');
-
+        const sortSelect = document.getElementById('sort-select');
+        const exportSavedBtn = document.getElementById('export-saved-btn');
+        const clearSavedBtn = document.getElementById('clear-saved-btn');
+        const randomProjectBtn = document.getElementById('random-project-btn');
+        const recentlyViewedListEl = document.getElementById('recently-viewed-list');
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmClearBtn = document.getElementById('confirm-clear-btn');
+        const cancelClearBtn = document.getElementById('cancel-clear-btn');
+        
         // --- App State ---
         let projects = [];
         let savedProjectIds = new Set();
-        let currentFilters = { search: '' };
+        let projectNotes = {};
+        let recentlyViewedIds = [];
+        let currentFilters = { search: '', sort: 'id' };
         let showingSaved = false;
         let selectedProjectId = null;
 
         // --- Local Storage Functions ---
-        function loadSavedProjectsFromStorage() {
-            const saved = localStorage.getItem('savedProjectIds');
-            if (saved) {
-                savedProjectIds = new Set(JSON.parse(saved).map(id => parseInt(id, 10)));
-            }
+        function loadFromStorage() {
+            const savedIds = localStorage.getItem('savedProjectIds');
+            if (savedIds) savedProjectIds = new Set(JSON.parse(savedIds).map(id => parseInt(id, 10)));
+            
+            const savedNotes = localStorage.getItem('projectNotes');
+            if (savedNotes) projectNotes = JSON.parse(savedNotes);
+
+            const recentIds = localStorage.getItem('recentlyViewedIds');
+            if (recentIds) recentlyViewedIds = JSON.parse(recentIds);
+            
             savedCountEl.textContent = savedProjectIds.size;
         }
 
-        function saveProjectsToStorage() {
-            localStorage.setItem('savedProjectIds', JSON.stringify([...savedProjectIds]));
-            savedCountEl.textContent = savedProjectIds.size;
+        function saveToStorage(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
         }
-
+        
         // --- Data Loading ---
         async function loadProjectsFromAPI() {
             try {
-                // Fetch data from the Python backend's API endpoint.
                 const response = await fetch('/api/projects');
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                
-                // The Python backend now provides lowercase keys. We just need to parse the ID.
-                projects = data.map(p => ({
-                    ...p,
-                    id: parseInt(p.id, 10)
-                }));
+                projects = data.map(p => ({ ...p, id: parseInt(p.id, 10) }));
                 renderAll();
             } catch (error) {
                 const errorMessage = `Failed to load projects: ${error.message}. Is the Python server (app.py) running?`;
@@ -135,7 +176,7 @@
 
         // --- Rendering Functions ---
         function renderProjectList() {
-            let projectsToRender = projects;
+            let projectsToRender = [...projects];
 
             if (showingSaved) {
                 projectsToRender = projectsToRender.filter(p => savedProjectIds.has(p.id));
@@ -144,18 +185,21 @@
             const searchTerm = currentFilters.search.toLowerCase();
             if (searchTerm) {
                 projectsToRender = projectsToRender.filter(p => {
-                    // This single search checks all relevant fields
-                    return (p.title && p.title.toLowerCase().includes(searchTerm)) ||
-                           (p.keywords && p.keywords.toLowerCase().includes(searchTerm)) ||
-                           (p.description && p.description.toLowerCase().includes(searchTerm)) ||
-                           (p.supervisor && p.supervisor.toLowerCase().includes(searchTerm)) ||
-                           (p.theme && p.theme.toLowerCase().includes(searchTerm)) ||
-                           (p.type && p.type.toLowerCase().includes(searchTerm));
+                    return Object.values(p).some(val => String(val).toLowerCase().includes(searchTerm));
+                });
+            }
+            
+            // Sorting Logic
+            const sortKey = currentFilters.sort;
+            if(sortKey !== 'id') {
+                projectsToRender.sort((a,b) => {
+                    const valA = a[sortKey] || '';
+                    const valB = b[sortKey] || '';
+                    return valA.localeCompare(valB);
                 });
             }
 
-
-            projectListEl.innerHTML = ''; // Clear list
+            projectListEl.innerHTML = '';
             if (projectsToRender.length === 0) {
                  projectListEl.innerHTML = `<div class="p-4 text-center text-gray-500">No projects match your criteria.</div>`;
                  return;
@@ -167,17 +211,8 @@
                 const item = document.createElement('div');
                 item.className = `p-4 cursor-pointer hover:bg-indigo-50 transition-colors duration-150 ${isSelected ? 'bg-indigo-100' : 'bg-white'}`;
                 item.dataset.id = project.id;
-                item.innerHTML = `
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1 min-w-0">
-                            <p class="font-semibold text-gray-800 truncate">${project.title || 'No Title'}</p>
-                            <p class="text-sm text-gray-600">${project.supervisor || 'N/A'}</p>
-                        </div>
-                        <button data-id="${project.id}" class="save-btn ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0">
-                            <i class="${isSaved ? 'fas' : 'far'} fa-star text-yellow-500"></i>
-                        </button>
-                    </div>
-                `;
+                item.innerHTML = `...`; // Content similar to before
+                item.innerHTML = `<div class="flex items-start justify-between"><div class="flex-1 min-w-0"><p class="font-semibold text-gray-800 truncate">${project.title||'No Title'}</p><p class="text-sm text-gray-600">${project.supervisor||'N/A'}</p></div><button data-id="${project.id}" class="save-btn ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0"><i class="${isSaved ? 'fas':'far'} fa-star text-yellow-500"></i></button></div>`;
                 projectListEl.appendChild(item);
             });
         }
@@ -191,50 +226,61 @@
             }
             
             const keywordsHtml = (project.keywords || '').split(',').map(k => `<span class="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs">${k.trim()}</span>`).join('');
+            const note = projectNotes[project.id] || '';
 
             projectDetailsEl.innerHTML = `
                 <div class="bg-white rounded-lg shadow-lg p-6 h-full flex flex-col">
                     <div class="flex-grow">
                         <div class="flex justify-between items-start mb-4">
                             <h2 class="text-2xl font-bold text-gray-900">${project.title}</h2>
-                            <button data-id="${project.id}" class="save-btn-details ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                                <i class="${savedProjectIds.has(project.id) ? 'fas' : 'far'} fa-star text-2xl text-yellow-500"></i>
-                                <span class="sr-only">Save project</span>
-                            </button>
+                            <button data-id="${project.id}" class="save-btn-details ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500"><i class="${savedProjectIds.has(project.id)?'fas':'far'} fa-star text-2xl text-yellow-500"></i></button>
                         </div>
-                        <p class="text-md text-gray-600 mb-4">Supervised by <span class="font-semibold">${project.supervisor}</span></p>
-                        
-                        <div class="prose max-w-none text-gray-700">
-                            <p>${project.description}</p>
-                        </div>
+                        <p class="text-md text-gray-600 mb-4">Supervised by <button class="font-semibold text-indigo-600 hover:underline supervisor-btn" data-supervisor="${project.supervisor}">${project.supervisor}</button></p>
+                        <div class="prose max-w-none text-gray-700"><p>${project.description}</p></div>
                     </div>
                     
-                    <div class="mt-6 pt-6 border-t border-gray-200 flex-shrink-0">
+                    <div class="mt-6 pt-6 border-t border-gray-200">
                         <div class="flex flex-wrap gap-4 text-sm">
-                            <div class="flex items-center">
-                                <span class="font-semibold mr-2">Theme:</span>
-                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${project.theme}</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="font-semibold mr-2">Type:</span>
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full">${project.type}</span>
-                            </div>
+                            <div class="flex items-center"><span class="font-semibold mr-2">Theme:</span><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${project.theme}</span></div>
+                            <div class="flex items-center"><span class="font-semibold mr-2">Type:</span><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full">${project.type}</span></div>
                         </div>
-                        <div class="mt-4">
-                             <span class="font-semibold mr-2">Keywords:</span>
-                             <div class="flex flex-wrap gap-2 mt-1">${keywordsHtml}</div>
-                        </div>
+                        <div class="mt-4"><span class="font-semibold mr-2">Keywords:</span><div class="flex flex-wrap gap-2 mt-1">${keywordsHtml}</div></div>
                     </div>
-                </div>
-            `;
+
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">My Private Notes</h3>
+                        <textarea id="note-textarea" class="w-full h-24 p-2 border border-gray-300 rounded-lg" placeholder="Add your notes here...">${note}</textarea>
+                        <button id="save-note-btn" data-id="${project.id}" class="mt-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">Save Note</button>
+                    </div>
+                </div>`;
+                
+            updateRecentlyViewed(projectId);
         }
-        
-        function renderStatusText() {
-            if (showingSaved) {
-                statusTextContainer.innerHTML = `<p class="text-indigo-600 font-medium">Showing only saved projects.</p>`;
-            } else {
-                statusTextContainer.innerHTML = '';
+
+        function renderRecentlyViewed() {
+            recentlyViewedListEl.innerHTML = '';
+            if(recentlyViewedIds.length === 0) {
+                 recentlyViewedListEl.innerHTML = `<p class="text-xs text-center text-gray-500 px-2">Projects you view will appear here.</p>`;
+                 return;
             }
+            const container = document.createElement('div');
+            container.className = 'flex flex-col space-y-1';
+            
+            recentlyViewedIds.forEach(id => {
+                const project = projects.find(p => p.id === id);
+                if(project) {
+                    const item = document.createElement('button');
+                    item.className = 'text-left text-sm text-indigo-700 hover:underline truncate px-2 py-1 rounded hover:bg-indigo-100';
+                    item.textContent = project.title;
+                    item.dataset.id = id;
+                    item.addEventListener('click', () => {
+                        renderProjectDetails(id);
+                        renderProjectList();
+                    });
+                    container.appendChild(item);
+                }
+            });
+            recentlyViewedListEl.appendChild(container);
         }
         
         function updateToggleButton() {
@@ -248,79 +294,110 @@
                 viewToggleBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
             }
         }
+        function renderStatusText() { if (showingSaved) { statusTextContainer.innerHTML = `<p class="text-indigo-600 font-medium">Showing only saved projects.</p>`; } else { statusTextContainer.innerHTML = ''; } }
 
-        // --- Event Handlers ---
+
+        // --- Event Handlers & Logic ---
         function handleSaveClick(projectId) {
             if (savedProjectIds.has(projectId)) {
                 savedProjectIds.delete(projectId);
             } else {
                 savedProjectIds.add(projectId);
             }
-            saveProjectsToStorage();
-            
-            // Re-render the list and details to reflect the change
+            saveToStorage('savedProjectIds', [...savedProjectIds]);
+            savedCountEl.textContent = savedProjectIds.size;
             renderProjectList();
             if (selectedProjectId === projectId) {
                 renderProjectDetails(projectId);
             }
-            updateToggleButton();
         }
 
-        searchInput.addEventListener('input', (e) => {
-            currentFilters.search = e.target.value;
-            renderProjectList();
-        });
+        function updateRecentlyViewed(projectId) {
+            recentlyViewedIds = [projectId, ...recentlyViewedIds.filter(id => id !== projectId)];
+            if(recentlyViewedIds.length > 5) recentlyViewedIds.pop();
+            saveToStorage('recentlyViewedIds', recentlyViewedIds);
+            renderRecentlyViewed();
+        }
 
-        viewToggleBtn.addEventListener('click', () => {
-            showingSaved = !showingSaved;
-            updateToggleButton();
-            renderProjectList();
-            renderStatusText();
-        });
-        
-        projectListEl.addEventListener('click', (e) => {
-            const item = e.target.closest('[data-id]');
-            if (!item) return;
+        function handleExport() {
+            const savedProjects = projects.filter(p => savedProjectIds.has(p.id));
+            if(savedProjects.length === 0) {
+                alert("No saved projects to export.");
+                return;
+            }
+            const headers = Object.keys(savedProjects[0]);
+            const csvRows = [headers.join(',')];
+            savedProjects.forEach(project => {
+                const values = headers.map(header => {
+                    const escaped = (''+project[header]).replace(/"/g, '""');
+                    return `"${escaped}"`;
+                });
+                csvRows.push(values.join(','));
+            });
+            
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'saved_projects.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
 
-            const projectId = parseInt(item.dataset.id, 10);
-            if (isNaN(projectId)) return;
-
-            if (e.target.closest('.save-btn')) {
-                handleSaveClick(projectId);
-            } else {
-                renderProjectDetails(projectId);
-                // After rendering the details, re-render the list to update the selection highlight.
+        searchInput.addEventListener('input', (e) => { currentFilters.search = e.target.value; renderProjectList(); });
+        sortSelect.addEventListener('change', (e) => { currentFilters.sort = e.target.value; renderProjectList(); });
+        viewToggleBtn.addEventListener('click', () => { showingSaved = !showingSaved; updateToggleButton(); renderProjectList(); renderStatusText(); });
+        exportSavedBtn.addEventListener('click', handleExport);
+        randomProjectBtn.addEventListener('click', () => {
+            if(projects.length > 0) {
+                const randomId = projects[Math.floor(Math.random() * projects.length)].id;
+                renderProjectDetails(randomId);
                 renderProjectList();
             }
         });
+        clearSavedBtn.addEventListener('click', () => confirmationModal.classList.remove('hidden'));
+        cancelClearBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
+        confirmClearBtn.addEventListener('click', () => {
+            savedProjectIds.clear();
+            saveToStorage('savedProjectIds', []);
+            savedCountEl.textContent = '0';
+            renderAll();
+            confirmationModal.classList.add('hidden');
+        });
+
+        projectListEl.addEventListener('click', (e) => {
+            const item = e.target.closest('[data-id]');
+            if (!item) return;
+            const projectId = parseInt(item.dataset.id, 10);
+            if (isNaN(projectId)) return;
+            if (e.target.closest('.save-btn')) { handleSaveClick(projectId); } 
+            else { renderProjectDetails(projectId); renderProjectList(); }
+        });
         
         projectDetailsEl.addEventListener('click', (e) => {
-             const saveButton = e.target.closest('.save-btn-details');
-             if(saveButton){
-                const projectId = parseInt(saveButton.dataset.id, 10);
-                if (!isNaN(projectId)) {
-                    handleSaveClick(projectId);
-                }
+             const target = e.target;
+             if(target.closest('.save-btn-details')) {
+                const projectId = parseInt(target.closest('[data-id]').dataset.id, 10);
+                if (!isNaN(projectId)) handleSaveClick(projectId);
+             } else if (target.id === 'save-note-btn') {
+                 const projectId = parseInt(target.dataset.id, 10);
+                 const noteText = document.getElementById('note-textarea').value;
+                 projectNotes[projectId] = noteText;
+                 saveToStorage('projectNotes', projectNotes);
+                 alert('Note saved!');
+             } else if (target.classList.contains('supervisor-btn')) {
+                 searchInput.value = target.dataset.supervisor;
+                 currentFilters.search = target.dataset.supervisor;
+                 renderProjectList();
              }
         });
         
-        function displayError(message) {
-            console.error(message);
-            alert(`Error: ${message}`);
-        }
-
         // --- Initialization ---
-        function renderAll() {
-            renderProjectList();
-            updateToggleButton();
-            renderStatusText();
-        }
-        
-        // Initial load
-        document.addEventListener('DOMContentLoaded', () => {
-             loadSavedProjectsFromStorage();
-             loadProjectsFromAPI();
-        });
+        function renderAll() { renderProjectList(); updateToggleButton(); renderStatusText(); renderRecentlyViewed(); }
+        document.addEventListener('DOMContentLoaded', () => { loadFromStorage(); loadProjectsFromAPI(); });
+        function displayError(message) { console.error(message); alert(`Error: ${message}`); }
     </script>
 </body>
 </html>
