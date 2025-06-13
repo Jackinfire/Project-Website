@@ -205,14 +205,25 @@
                  return;
             }
 
-            projectsToRender.forEach(project => {
+            projectsToRender.forEach((project, index) => {
                 const isSaved = savedProjectIds.has(project.id);
                 const isSelected = project.id === selectedProjectId;
                 const item = document.createElement('div');
                 item.className = `p-4 cursor-pointer hover:bg-indigo-50 transition-colors duration-150 ${isSelected ? 'bg-indigo-100' : 'bg-white'}`;
                 item.dataset.id = project.id;
-                item.innerHTML = `...`; // Content similar to before
-                item.innerHTML = `<div class="flex items-start justify-between"><div class="flex-1 min-w-0"><p class="font-semibold text-gray-800 truncate">${project.title||'No Title'}</p><p class="text-sm text-gray-600">${project.supervisor||'N/A'}</p></div><button data-id="${project.id}" class="save-btn ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0"><i class="${isSaved ? 'fas':'far'} fa-star text-yellow-500"></i></button></div>`;
+                item.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start flex-1 min-w-0">
+                            <span class="text-sm font-semibold text-gray-500 mr-3 w-6 text-right pt-px">${index + 1}.</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-gray-800 truncate">${project.title || 'No Title'}</p>
+                                <p class="text-sm text-gray-600">${project.supervisor || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <button data-id="${project.id}" class="save-btn ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0">
+                            <i class="${isSaved ? 'fas' : 'far'} fa-star text-yellow-500"></i>
+                        </button>
+                    </div>`;
                 projectListEl.appendChild(item);
             });
         }
