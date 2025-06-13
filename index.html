@@ -44,6 +44,9 @@
                         <button id="viewToggle" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">
                             View Saved (<span id="savedCount">0</span>)
                         </button>
+                        <button id="view-discarded-btn" class="w-full sm:w-auto px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75">
+                            View Discarded (<span id="discardedCount">0</span>)
+                        </button>
                         <button id="export-saved-btn" class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75">Export Saved</button>
                         <button id="clear-saved-btn" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">Clear Saved</button>
                         <button id="random-project-btn" class="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75">Random Project</button>
@@ -124,6 +127,8 @@
         const clearSavedBtn = document.getElementById('clear-saved-btn');
         const randomProjectBtn = document.getElementById('random-project-btn');
         const recentlyViewedListEl = document.getElementById('recently-viewed-list');
+        const viewDiscardedBtn = document.getElementById('view-discarded-btn');
+        const discardedCountEl = document.getElementById('discardedCount');
         const confirmationModal = document.getElementById('confirmation-modal');
         const confirmClearBtn = document.getElementById('confirm-clear-btn');
         const cancelClearBtn = document.getElementById('cancel-clear-btn');
@@ -131,10 +136,10 @@
         // --- App State ---
         let projects = [];
         let savedProjectIds = new Set();
+        let discardedProjectIds = new Set();
         let projectNotes = {};
         let recentlyViewedIds = [];
-        let currentFilters = { search: '', sort: 'id' };
-        let showingSaved = false;
+        let currentFilters = { search: '', sort: 'id', view: 'main' }; // view: 'main', 'saved', 'discarded'
         let selectedProjectId = null;
 
         // --- Local Storage Functions ---
@@ -142,6 +147,9 @@
             const savedIds = localStorage.getItem('savedProjectIds');
             if (savedIds) savedProjectIds = new Set(JSON.parse(savedIds).map(id => parseInt(id, 10)));
             
+            const discardedIds = localStorage.getItem('discardedProjectIds');
+            if (discardedIds) discardedProjectIds = new Set(JSON.parse(discardedIds).map(id => parseInt(id, 10)));
+
             const savedNotes = localStorage.getItem('projectNotes');
             if (savedNotes) projectNotes = JSON.parse(savedNotes);
 
@@ -149,6 +157,7 @@
             if (recentIds) recentlyViewedIds = JSON.parse(recentIds);
             
             savedCountEl.textContent = savedProjectIds.size;
+            discardedCountEl.textContent = discardedProjectIds.size;
         }
 
         function saveToStorage(key, data) {
@@ -178,10 +187,16 @@
         function renderProjectList() {
             let projectsToRender = [...projects];
 
-            if (showingSaved) {
+            // 1. Primary Filter based on current view (main, saved, or discarded)
+            if (currentFilters.view === 'saved') {
                 projectsToRender = projectsToRender.filter(p => savedProjectIds.has(p.id));
+            } else if (currentFilters.view === 'discarded') {
+                projectsToRender = projectsToRender.filter(p => discardedProjectIds.has(p.id));
+            } else { // 'main' view
+                projectsToRender = projectsToRender.filter(p => !discardedProjectIds.has(p.id));
             }
 
+            // 2. Search Filter
             const searchTerm = currentFilters.search.toLowerCase();
             if (searchTerm) {
                 projectsToRender = projectsToRender.filter(p => {
@@ -189,7 +204,7 @@
                 });
             }
             
-            // Sorting Logic
+            // 3. Sorting Logic
             const sortKey = currentFilters.sort;
             if(sortKey !== 'id') {
                 projectsToRender.sort((a,b) => {
@@ -211,6 +226,17 @@
                 const item = document.createElement('div');
                 item.className = `p-4 cursor-pointer hover:bg-indigo-50 transition-colors duration-150 ${isSelected ? 'bg-indigo-100' : 'bg-white'}`;
                 item.dataset.id = project.id;
+
+                let actionButtonsHtml = '';
+                if(currentFilters.view === 'discarded') {
+                    actionButtonsHtml = `<button data-id="${project.id}" title="Restore Project" class="restore-btn p-2 rounded-full hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 flex-shrink-0"><i class="fas fa-undo text-green-600"></i></button>`;
+                } else {
+                    actionButtonsHtml = `
+                        <button data-id="${project.id}" title="Favorite" class="save-btn p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0"><i class="${isSaved ? 'fas':'far'} fa-star text-yellow-500"></i></button>
+                        <button data-id="${project.id}" title="Discard Project" class="discard-btn ml-2 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 flex-shrink-0"><i class="fas fa-trash-alt text-red-500"></i></button>
+                    `;
+                }
+                
                 item.innerHTML = `
                     <div class="flex items-start justify-between">
                         <div class="flex items-start flex-1 min-w-0">
@@ -220,9 +246,9 @@
                                 <p class="text-sm text-gray-600">${project.supervisor || 'N/A'}</p>
                             </div>
                         </div>
-                        <button data-id="${project.id}" class="save-btn ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0">
-                            <i class="${isSaved ? 'fas' : 'far'} fa-star text-yellow-500"></i>
-                        </button>
+                        <div class="flex items-center">
+                            ${actionButtonsHtml}
+                        </div>
                     </div>`;
                 projectListEl.appendChild(item);
             });
@@ -294,33 +320,47 @@
             recentlyViewedListEl.appendChild(container);
         }
         
-        function updateToggleButton() {
-             if (showingSaved) {
-                viewToggleBtn.textContent = 'View All Projects';
-                viewToggleBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                viewToggleBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
-            } else {
-                viewToggleBtn.innerHTML = `View Saved (<span id="savedCount">${savedProjectIds.size}</span>)`;
-                viewToggleBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                viewToggleBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+        function renderStatusText() {
+            let text = '';
+            if (currentFilters.view === 'saved') {
+                text = 'Showing only saved projects.';
+            } else if (currentFilters.view === 'discarded') {
+                text = 'Showing discarded projects. Click restore icon to move them back.';
             }
+            statusTextContainer.innerHTML = `<p class="text-indigo-600 font-medium">${text}</p>`;
         }
-        function renderStatusText() { if (showingSaved) { statusTextContainer.innerHTML = `<p class="text-indigo-600 font-medium">Showing only saved projects.</p>`; } else { statusTextContainer.innerHTML = ''; } }
 
 
         // --- Event Handlers & Logic ---
         function handleSaveClick(projectId) {
-            if (savedProjectIds.has(projectId)) {
-                savedProjectIds.delete(projectId);
-            } else {
-                savedProjectIds.add(projectId);
-            }
+            if (savedProjectIds.has(projectId)) { savedProjectIds.delete(projectId); } 
+            else { savedProjectIds.add(projectId); }
             saveToStorage('savedProjectIds', [...savedProjectIds]);
             savedCountEl.textContent = savedProjectIds.size;
             renderProjectList();
-            if (selectedProjectId === projectId) {
-                renderProjectDetails(projectId);
+            if (selectedProjectId === projectId) { renderProjectDetails(projectId); }
+        }
+
+        function handleDiscardClick(projectId) {
+            if (!discardedProjectIds.has(projectId)) {
+                discardedProjectIds.add(projectId);
+                savedProjectIds.delete(projectId); // A discarded project cannot be saved
+                saveToStorage('discardedProjectIds', [...discardedProjectIds]);
+                saveToStorage('savedProjectIds', [...savedProjectIds]);
+                discardedCountEl.textContent = discardedProjectIds.size;
+                savedCountEl.textContent = savedProjectIds.size;
+                if(selectedProjectId === projectId) { projectDetailsEl.innerHTML = '...'; selectedProjectId = null; }
+                renderProjectList();
             }
+        }
+
+        function handleRestoreClick(projectId) {
+             if (discardedProjectIds.has(projectId)) {
+                discardedProjectIds.delete(projectId);
+                saveToStorage('discardedProjectIds', [...discardedProjectIds]);
+                discardedCountEl.textContent = discardedProjectIds.size;
+                renderProjectList();
+             }
         }
 
         function updateRecentlyViewed(projectId) {
@@ -332,20 +372,13 @@
 
         function handleExport() {
             const savedProjects = projects.filter(p => savedProjectIds.has(p.id));
-            if(savedProjects.length === 0) {
-                alert("No saved projects to export.");
-                return;
-            }
+            if(savedProjects.length === 0) { alert("No saved projects to export."); return; }
             const headers = Object.keys(savedProjects[0]);
             const csvRows = [headers.join(',')];
             savedProjects.forEach(project => {
-                const values = headers.map(header => {
-                    const escaped = (''+project[header]).replace(/"/g, '""');
-                    return `"${escaped}"`;
-                });
+                const values = headers.map(header => `"${(''+project[header]).replace(/"/g, '""')}"`);
                 csvRows.push(values.join(','));
             });
-            
             const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -359,13 +392,28 @@
 
         searchInput.addEventListener('input', (e) => { currentFilters.search = e.target.value; renderProjectList(); });
         sortSelect.addEventListener('change', (e) => { currentFilters.sort = e.target.value; renderProjectList(); });
-        viewToggleBtn.addEventListener('click', () => { showingSaved = !showingSaved; updateToggleButton(); renderProjectList(); renderStatusText(); });
+        
+        viewToggleBtn.addEventListener('click', () => {
+            currentFilters.view = currentFilters.view === 'saved' ? 'main' : 'saved';
+            renderAll();
+        });
+
+        viewDiscardedBtn.addEventListener('click', () => {
+             currentFilters.view = currentFilters.view === 'discarded' ? 'main' : 'discarded';
+             renderAll();
+        });
+
         exportSavedBtn.addEventListener('click', handleExport);
         randomProjectBtn.addEventListener('click', () => {
             if(projects.length > 0) {
-                const randomId = projects[Math.floor(Math.random() * projects.length)].id;
-                renderProjectDetails(randomId);
-                renderProjectList();
+                const eligibleProjects = projects.filter(p => !discardedProjectIds.has(p.id));
+                if (eligibleProjects.length > 0) {
+                    const randomId = eligibleProjects[Math.floor(Math.random() * eligibleProjects.length)].id;
+                    renderProjectDetails(randomId);
+                    renderProjectList();
+                } else {
+                    alert("No projects available to select.");
+                }
             }
         });
         clearSavedBtn.addEventListener('click', () => confirmationModal.classList.remove('hidden'));
@@ -383,7 +431,10 @@
             if (!item) return;
             const projectId = parseInt(item.dataset.id, 10);
             if (isNaN(projectId)) return;
-            if (e.target.closest('.save-btn')) { handleSaveClick(projectId); } 
+            
+            if (e.target.closest('.save-btn')) { handleSaveClick(projectId); }
+            else if (e.target.closest('.discard-btn')) { handleDiscardClick(projectId); }
+            else if (e.target.closest('.restore-btn')) { handleRestoreClick(projectId); }
             else { renderProjectDetails(projectId); renderProjectList(); }
         });
         
@@ -406,7 +457,17 @@
         });
         
         // --- Initialization ---
-        function renderAll() { renderProjectList(); updateToggleButton(); renderStatusText(); renderRecentlyViewed(); }
+        function renderAll() { 
+            renderProjectList(); 
+            // Update button styles based on view
+            viewToggleBtn.classList.toggle('bg-blue-700', currentFilters.view === 'saved');
+            viewToggleBtn.classList.toggle('bg-indigo-600', currentFilters.view !== 'saved');
+            viewDiscardedBtn.classList.toggle('bg-slate-700', currentFilters.view === 'discarded');
+            viewDiscardedBtn.classList.toggle('bg-gray-500', currentFilters.view !== 'discarded');
+            
+            renderStatusText(); 
+            renderRecentlyViewed();
+        }
         document.addEventListener('DOMContentLoaded', () => { loadFromStorage(); loadProjectsFromAPI(); });
         function displayError(message) { console.error(message); alert(`Error: ${message}`); }
     </script>
